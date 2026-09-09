@@ -1,0 +1,13 @@
+node_modules/
+dist/
+versions/
+*.log
+*.zip
+*.exe
+*.dmg
+*.app
+.env
+.env.*
+settings.json
+companion.json
+pokedex-catalog.json

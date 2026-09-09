@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Token Companion</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+  <header class="app-header"><div><p class="eyebrow">LOCAL-FIRST · WINDOWS</p><h1>Token Companion</h1></div><div class="header-tools"><span id="role-badge" class="role-badge master">👑 Master</span><button id="check-update">Check update</button><span id="updated">Waiting…</span><select id="language" aria-label="Language"><option value="en">English</option><option value="zh-CN">中文</option></select><button id="open-settings" class="settings-btn" title="Settings & Admin Console">⚙️ Settings</button><button id="refresh">Refresh</button></div></header>
+  <aside id="update-banner" class="update-banner" style="display:none"><div class="update-banner-content"><strong id="update-banner-title">⚡ Update available!</strong><p id="update-banner-desc" class="muted">A newer version is ready from Master.</p><div id="update-progress-container" class="progress" style="display:none;margin-top:6px;height:8px"><i id="update-progress-bar" style="width:0%"></i></div></div><div class="update-banner-actions"><button id="update-now-btn" class="swap-btn">Update Now</button><button id="update-dismiss-btn">Dismiss</button></div></aside>
+  <nav class="tabs" aria-label="Main navigation"><button class="tab active" data-tab="home">Home</button><button class="tab" data-tab="inventory">Inventory <b id="inventory-total">0</b></button><button class="tab" data-tab="pokedex">Pokédex</button><button class="tab" data-tab="battle">Battle</button><button class="tab" data-tab="trade">Trade</button></nav>
+  <main>
+    <section class="tab-panel active" id="home">
+      <section class="hero-card"><div class="sprite-stage"><div id="sprite" class="big-sprite egg">🥚</div></div><div class="hero-copy"><p class="eyebrow" id="pet-status">NO ACTIVE COMPANION</p><h2 id="pet-name">Choose an egg</h2><p id="pet-detail">Choose an egg from your inventory to start.</p><div class="progress-label"><span id="progress-title">Choose an egg to begin</span><strong id="progress-number">—</strong></div><div class="progress"><i id="progress-bar"></i></div><div id="evolution" class="evolution"></div><button id="trade-active" disabled>Trade active companion</button></div></section>
+      <section class="metrics"><article><span>Today’s tokens</span><strong id="total">0</strong><small id="turns">0 token events</small></article><article><span>Input</span><strong id="input">0</strong><small>Prompt tokens</small></article><article><span>Cache</span><strong id="cache">0</strong><small>Cached input</small></article><article><span>Output</span><strong id="output">0</strong><small>Response + reasoning</small></article></section>
+      <section class="two-col"><article class="panel"><div class="panel-heading"><div><p class="eyebrow">EGG INVENTORY</p><h3>Your eggs</h3></div><strong id="egg-count">0</strong></div><div id="eggs" class="card-grid small-grid"></div></article><article class="panel"><div class="panel-heading"><div><p class="eyebrow">LOCAL ACTIVITY</p><h3>Recent tokens</h3></div><span>read-only</span></div><div id="activity" class="activity"></div><p id="source" class="muted"></p></article></section>
+    </section>
+    <section class="tab-panel" id="inventory"><div class="panel-heading"><div><p class="eyebrow" id="inventory-eyebrow">OWNED POKÉMON</p><h2 id="inventory-title">Inventory</h2><p class="muted" id="inventory-desc">Every individual Pokémon you own. Duplicates are separate cards.</p></div><strong id="inventory-count">0 owned</strong></div><div class="egg-claim-card"><div class="egg-claim-content"><span class="egg-claim-icon">🥚</span><div><div class="egg-claim-heading" id="egg-claim-title">Free Egg Claim</div><div class="egg-claim-subtitle" id="egg-claim-desc">Claim a companion egg from the wild (4-hour cooldown)</div></div><span id="egg-claim-timer" class="egg-claim-timer">Ready to Claim</span></div><button id="claim-egg-btn" class="claim-btn">🥚 Claim Egg</button></div><div id="inventory-grid" class="card-grid"></div></section>
+    <section class="tab-panel" id="pokedex"><div class="panel-heading"><div><p class="eyebrow">NATIONAL CATALOG</p><h2>Pokédex</h2><p class="muted">Completion progress only. Your individual Pokémon live in Inventory.</p></div><strong id="pokedex-count">0 / 1025</strong></div><div class="toolbar filters"><label>Search <input id="pokedex-search" type="search" placeholder="Name or number"></label><label>Game <select id="pokedex-game"><option value="all">All games</option><option value="rby">Red / Blue / Yellow</option><option value="gsc">Gold / Silver / Crystal</option><option value="rse">Ruby / Sapphire / Emerald</option><option value="dpp">Diamond / Pearl / Platinum</option><option value="bw">Black / White</option><option value="xy">X / Y</option><option value="sm">Sun / Moon</option><option value="swsh">Sword / Shield</option><option value="sv">Scarlet / Violet</option></select></label><label>Collection <select id="pokedex-owned"><option value="all">Owned + unowned</option><option value="owned">Owned only</option><option value="unowned">Unowned only</option><option value="recent">Recently collected</option></select></label><button id="pokedex-clear">Clear filters</button><div><button id="pokedex-prev">Previous</button><span id="pokedex-page">1 / 1</span><button id="pokedex-next">Next</button></div></div><div id="pokedex-grid" class="card-grid dex-grid"></div></section>
+    <section class="tab-panel" id="battle"><div class="panel-heading"><div><p class="eyebrow">AUTO BATTLE</p><h2>Saved battle team</h2><p class="muted">Choose 1–6 Pokémon from Inventory. This never changes your active companion.</p></div><strong id="team-count">0 / 6</strong></div><div id="team-slots" class="team-slots"></div><div class="battle-subtabs"><button type="button" class="battle-subtab active" data-subtab="practice">🎯 Practice & PvP</button><button type="button" class="battle-subtab" data-subtab="tower">🏰 Battle Tower (Survival Gauntlet)</button></div><div id="battle-mode-practice" class="battle-subpanel"><section class="panel inset"><h3>Choose from Inventory</h3><div id="battle-picker" class="card-grid small-grid"></div></section><section class="two-col"><article class="panel inset"><h3>Practice</h3><p class="muted" id="practice-desc">Test your saved team against themed opponent tiers.</p><div style="display:grid;gap:10px;margin-bottom:12px"><label><span id="tier-label">Opponent Tier</span><select id="practice-tier"><option value="veteran">Veteran — Lv.70</option><option value="elite_four">Elite Four — Lv.80</option><option value="champion">Champion — Lv.90</option><option value="master_rank">Master Rank — Lv.100</option><option value="mythic_trial">Mythic Trial — Lv.100 legendaries</option><option value="arceus_gauntlet">Arceus Gauntlet — Lv.100 endgame legendary/mythical team</option></select></label><div><span class="eyebrow" id="speed-label" style="display:block;margin-bottom:6px">BATTLE SPEED</span><div class="speed-controls" id="battle-speed-controls"><button type="button" class="speed-btn active" data-speed="1">1×</button><button type="button" class="speed-btn" data-speed="2">&gt;&gt; 2×</button><button type="button" class="speed-btn" data-speed="4">&gt;&gt;&gt; 4×</button><button type="button" class="speed-btn" data-speed="8">&gt;&gt;&gt;&gt; 8×</button></div></div></div><button id="auto-fight">Practice fight</button></article><article class="panel inset"><h3>Fight a player</h3><label>Relay URL<input id="battle-relay" value="http://127.0.0.1:48080"></label><label>6-digit battle code<input id="battle-code" inputmode="numeric" maxlength="6" placeholder="Create or enter code"></label><div class="button-row"><button id="battle-create">Create battle</button><button id="battle-join">Join battle</button><button id="battle-start">Run battle</button></div></article></section></div><div id="battle-mode-tower" class="battle-subpanel" style="display:none"><article class="panel inset tower-panel"><div class="tower-header"><div><span class="eyebrow" id="tower-eyebrow">SURVIVAL GAUNTLET</span><h3 id="tower-floor-title">Floor 1</h3><p class="muted" id="tower-floor-desc">Endurance challenge! Team HP carries over between floors. Defeat Boss Floors for Rare/Epic/Legendary Eggs.</p></div><div class="tower-badges"><span id="tower-record-badge" class="tower-badge">🏆 Record: Floor 0</span><span id="tower-status-badge" class="tower-badge">Ready</span></div></div><div><span class="eyebrow" style="display:block;margin-bottom:6px">TEAM SURVIVAL STATUS</span><div id="tower-team-status" class="tower-team-status"></div></div><div class="button-row" style="margin-top:16px"><button id="tower-fight-btn" class="primary-btn">⚔️ Challenge Floor 1</button><button id="tower-reset-btn" class="danger">Restart Run (Heal All)</button></div></article></div><pre id="battle-result" class="result-box"></pre></section>
+    <section class="tab-panel" id="trade"><div class="panel-heading"><div><p class="eyebrow">SAME WI-FI TRADING</p><h2>Trade Pokémon</h2><p class="muted">Host once, share the local address and a six-digit code, then both players confirm.</p></div></div><section class="panel relay-panel"><div><h3>1. Host or enter relay</h3><label>Relay URL<input id="trade-relay" value="http://127.0.0.1:48080"></label></div><div><button id="host-trade">Host local relay</button><p id="trade-host-status" class="muted"></p></div></section><section class="two-col"><article class="panel inset"><h3>2. Create offer</h3><label>Your Pokémon<select id="trade-offer"></select></label><button id="trade-create">Create 6-digit code</button><p id="trade-created" class="result-box"></p></article><article class="panel inset"><h3>3. Join and confirm</h3><label>6-digit trade code<input id="trade-code" inputmode="numeric" maxlength="6" placeholder="000000"></label><label>Your offered Pokémon<select id="trade-join-offer"></select></label><div class="button-row"><button id="trade-join">Join trade</button><button id="trade-confirm">Confirm trade</button></div><p id="trade-status" class="result-box"></p></article></section></section>
+  </main>
+  <footer>Unofficial fan companion · Not affiliated with OpenAI, Nintendo, Game Freak, or The Pokémon Company.</footer>
+  <dialog id="pokemon-detail" class="detail-dialog"></dialog>
+  <dialog id="settings-dialog" class="settings-dialog">
+    <div class="settings-dialog-header">
+      <div class="settings-title-group">
+        <span style="font-size:22px">⚙️</span>
+        <div>
+          <h2 id="settings-title">Settings</h2>
+          <p class="muted" id="settings-subtitle">Preferences & Developer Console</p>
+        </div>
+      </div>
+      <button id="close-settings" class="dialog-close-btn" aria-label="Close">✕</button>
+    </div>
+    <div class="settings-body">
+      <section class="settings-section">
+        <h3 id="settings-general-heading">General</h3>
+        <div class="settings-row">
+          <label for="settings-lang-select" id="settings-lang-label">Language / 语言</label>
+          <select id="settings-lang-select"><option value="en">English</option><option value="zh-CN">中文</option></select>
+        </div>
+        <div class="settings-row">
+          <span id="settings-node-label">Network Mode</span>
+          <span id="settings-node-badge" class="role-badge master">👑 Master</span>
+        </div>
+      </section>
+      <section class="settings-section admin-auth-section">
+        <div class="settings-section-header">
+          <h3 id="settings-admin-heading">🛡️ Admin Developer Console</h3>
+          <span id="admin-status-badge" class="admin-badge locked">🔒 Locked</span>
+        </div>
+        <p class="muted" id="settings-admin-desc">Enter the Master Passcode to unlock developer cheats, instant leveling, and Pokémon spawner.</p>
+        <div id="admin-login-box" class="admin-input-row">
+          <input type="password" id="admin-passcode-input" placeholder="Enter Admin Code..." autocomplete="off">
+          <button type="button" id="admin-unlock-btn" class="swap-btn">Unlock</button>
+        </div>
+        <p id="admin-passcode-msg" class="admin-msg" style="display:none"></p>
+        <div id="admin-panel" class="admin-panel" style="display:none">
+          <div class="admin-grid">
+            <div class="admin-card">
+              <h4>⚡ Active Companion</h4>
+              <div class="admin-btn-grid">
+                <button type="button" class="admin-action-btn admin-full-only" data-action="instant-100">🏆 Instant Lv.100</button>
+                <button type="button" class="admin-action-btn" data-action="force-evolve">🧬 Force Evolve</button>
+                <button type="button" class="admin-action-btn admin-full-only" data-action="toggle-shiny">✨ Toggle Shiny</button>
+                <button type="button" class="admin-action-btn" data-action="add-10k">+10,000 EXP</button>
+                <button type="button" class="admin-action-btn admin-full-only" data-action="add-100k">+100,000 EXP</button>
+                <button type="button" class="admin-action-btn admin-full-only" data-action="add-1m">+1,000,000 EXP</button>
+              </div>
+            </div>
+            <div class="admin-card">
+              <h4>🥚 Egg Tools</h4>
+              <div style="display:grid;gap:6px;margin-bottom:8px">
+                <label>Group:
+                  <select id="admin-egg-group">
+                    <option value="standard">Standard</option>
+                    <option value="baby">Baby</option>
+                    <option value="starter">Starter</option>
+                    <option value="fossil">Fossil</option>
+                    <option value="powerhouse">Powerhouse</option>
+                    <option value="paradox">Ultra / Paradox</option>
+                    <option value="legendary">Legendary</option>
+                    <option value="mythical">Mythical</option>
+                  </select>
+                </label>
+                <label id="admin-egg-shiny-label" class="admin-full-only" style="display:flex;align-items:center;gap:6px">
+                  <input type="checkbox" id="admin-egg-shiny"> Shiny Egg (✨)
+                </label>
+              </div>
+              <div class="admin-btn-grid">
+                <button type="button" id="admin-spawn-egg-btn" class="swap-btn">Spawn Egg</button>
+                <button type="button" id="admin-reset-cooldown-btn" class="admin-full-only">⏳ Reset Cooldown</button>
+              </div>
+            </div>
+            <div class="admin-card admin-full-only" style="grid-column:1 / -1">
+              <h4>🎁 Spawn Pokémon into Inventory</h4>
+              <div class="admin-spawner-row">
+                <label style="flex:2">Pokédex # (1–1025) or Name:
+                  <input type="text" id="admin-spawn-id" placeholder="e.g. 150 or Mewtwo">
+                </label>
+                <label style="flex:1">Level:
+                  <input type="number" id="admin-spawn-lvl" value="100" min="1" max="100">
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;margin-top:16px">
+                  <input type="checkbox" id="admin-spawn-shiny"> Shiny (✨)
+                </label>
+                <button type="button" id="admin-spawn-mon-btn" class="swap-btn" style="align-self:flex-end">Add to Inventory</button>
+              </div>
+            </div>
+            <div class="admin-card admin-full-only">
+              <h4>🏰 Battle Tower</h4>
+              <div class="admin-btn-grid">
+                <button type="button" id="admin-heal-tower-btn">❤️ Heal All Team HP</button>
+                <div style="display:flex;gap:4px">
+                  <input type="number" id="admin-tower-floor-input" value="40" min="1" max="100" style="width:60px">
+                  <button type="button" id="admin-jump-floor-btn" style="flex:1">Jump</button>
+                </div>
+              </div>
+            </div>
+            <div class="admin-card danger-card admin-full-only">
+              <h4>⚠️ Danger Zone</h4>
+              <button type="button" id="admin-reset-save-btn" class="danger" style="width:100%">Reset Save to Default</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </dialog>
+  <script src="renderer.js"></script>
+</body></html>

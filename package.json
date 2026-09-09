@@ -1,0 +1,28 @@
+{
+  "name": "poketokenbar-windows",
+  "version": "0.4.20",
+  "private": true,
+  "description": "A local-first Windows companion that grows as you use Codex.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "check": "node --check main.js && node --check preload.js && node --check updater.js && node --check usage.js && node --check renderer.js && node --check trade-relay.js && node --check trade-client.js && node --check ide-tracker.js",
+    "test": "node --test tests/**/*.test.js",
+    "package": "electron-builder --win portable",
+    "package:master": "electron-builder --win portable --config.extraMetadata.productName=\"Token Companion (Master)\" --config.portable.artifactName=\"Token Companion (Master) ${version}.${ext}\"",
+    "package:client": "electron-builder --win portable --config.extraMetadata.productName=\"Token Companion (Client)\" --config.portable.artifactName=\"Token Companion (Client) ${version}.${ext}\"",
+    "package:all": "npm run package:master && npm run package:client"
+  },
+  "build": {
+    "appId": "com.localfirst.tokencompanion",
+    "productName": "Token Companion",
+    "icon": "assets/token-companion-icon-512.png",
+    "files": ["**/*", "!dist/**", "!versions/**", "!tests/**", "!work/**"],
+    "win": { "target": ["portable"] },
+    "portable": { "artifactName": "Token Companion ${version}.${ext}" }
+  },
+  "devDependencies": {
+    "electron": "^39.0.0",
+    "electron-builder": "^26.0.12"
+  }
+}

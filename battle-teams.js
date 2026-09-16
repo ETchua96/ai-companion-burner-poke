@@ -9,7 +9,9 @@
   }
 
   let battleQuery = '';
-  let battleView = localStorage.getItem('battle-picker-view') || 'cards';
+  let battleType = 'all', battleShiny = 'all', battleLevel = 'all';
+  const typeOptions = () => ['bug','dark','dragon','electric','fairy','fighting','fire','flying','ghost','grass','ground','ice','normal','poison','psychic','rock','steel','water'];
+  const levelMatches = level => battleLevel === 'all' || (battleLevel === '1-20' && level <= 20) || (battleLevel === '21-50' && level >= 21 && level <= 50) || (battleLevel === '51-99' && level >= 51 && level <= 99) || (battleLevel === '100' && level >= 100);
   function installBattlePicker() {
     const picker = byId('battle-picker');
     if (!picker) return null;
@@ -33,26 +35,21 @@
     const matches = roster.filter(mon => {
       const name = monName(mon).toLowerCase();
       const types = (lineFor(mon.line).types?.[monStage(mon)] || []).join(' ').toLowerCase();
-      return !query || name.includes(query) || String(monSpriteId(mon)) === query || types.includes(query);
+      const matchesText = !query || name.includes(query) || String(monSpriteId(mon)) === query || types.includes(query);
+      const matchesType = battleType === 'all' || types.split(' ').includes(battleType);
+      const matchesShiny = battleShiny === 'all' || (battleShiny === 'shiny' && mon.shiny) || (battleShiny === 'normal' && !mon.shiny);
+      return matchesText && matchesType && matchesShiny && levelMatches(mon.level || 100);
     });
     const addable = matches.filter(mon => !team.includes(mon.id));
     const cards = addable.map(mon => `<article class="battle-picker-card"><img src="${sprite(monSpriteId(mon), mon.shiny)}"><strong>${mon.shiny ? '✨ ' : ''}${monName(mon)}</strong><span>Lv.${mon.level || 100}</span><button type="button" class="battle-card-add" data-id="${mon.id}" ${team.length >= 6 ? 'disabled' : ''}>${text('Add', '加入')}</button></article>`).join('') || `<p class="muted">${text('No matching Pokémon available.', '没有可加入的匹配宝可梦。')}</p>`;
-    controls.innerHTML = `<label><span>${text('Search Inventory', '搜索库存')}</span><input id="battle-picker-search" type="search" value="${battleQuery.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}" placeholder="${text('Name, number, or type', '名称、编号或属性')}"></label><div class="battle-view-switch"><span>${text('View', '视图')}</span><button type="button" class="battle-view-btn ${battleView === 'cards' ? 'active' : ''}" data-view="cards">${text('Sprite cards', '精灵卡片')}</button><button type="button" class="battle-view-btn ${battleView === 'dropdown' ? 'active' : ''}" data-view="dropdown">${text('Compact dropdown', '紧凑下拉')}</button></div><div class="battle-picker-row ${battleView === 'dropdown' ? '' : 'hidden'}"><label><span>${text('Choose Pokémon', '选择宝可梦')}</span><select id="battle-picker-select"><option value="">${text('Choose from inventory…', '从库存中选择…')}</option>${addable.map(mon => `<option value="${mon.id}">${mon.shiny ? '✨ ' : ''}${monName(mon)} · Lv.${mon.level || 100}</option>`).join('')}</select></label><button type="button" id="battle-picker-add" ${!addable.length || team.length >= 6 ? 'disabled' : ''}>${text('Add to team', '加入队伍')}</button></div><div class="battle-picker-card-grid ${battleView === 'cards' ? '' : 'hidden'}">${cards}</div><div class="current-team-members">${team.length ? team.map(id => { const mon = roster.find(entry => String(entry.id) === String(id)); return mon ? `<button type="button" class="battle-member-remove" data-id="${mon.id}"><img src="${sprite(monSpriteId(mon), mon.shiny)}"><span>${mon.shiny ? '✨ ' : ''}${monName(mon)}<small>Lv.${mon.level || 100}</small></span><b>×</b></button>` : ''; }).join('') : `<span class="muted">${text('No Pokémon selected yet.', '尚未选择宝可梦。')}</span>`}</div>`;
+    controls.innerHTML = `<div class="filter-deck"><label><span>${text('Name or number', '名称或编号')}</span><input id="battle-picker-search" type="search" value="${battleQuery.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}" placeholder="${text('Type to filter…', '输入筛选…')}"></label><label><span>${text('Type', '属性')}</span><select id="battle-picker-type"><option value="all">${text('All types', '全部属性')}</option>${typeOptions().map(type => `<option value="${type}">${type[0].toUpperCase() + type.slice(1)}</option>`).join('')}</select></label><label><span>${text('Shiny', '闪光')}</span><select id="battle-picker-shiny"><option value="all">${text('All', '全部')}</option><option value="shiny">${text('Shiny only', '仅闪光')}</option><option value="normal">${text('Non-shiny', '非闪光')}</option></select></label><label><span>${text('Level', '等级')}</span><select id="battle-picker-level"><option value="all">${text('All levels', '全部等级')}</option><option value="1-20">Lv. 1–20</option><option value="21-50">Lv. 21–50</option><option value="51-99">Lv. 51–99</option><option value="100">Lv. 100</option></select></label><span class="filter-count">${addable.length} ${text('available', '可加入')}</span></div><div class="battle-picker-card-grid">${cards}</div><div class="current-team-members">${team.length ? team.map(id => { const mon = roster.find(entry => String(entry.id) === String(id)); return mon ? `<button type="button" class="battle-member-remove" data-id="${mon.id}"><img src="${sprite(monSpriteId(mon), mon.shiny)}"><span>${mon.shiny ? '✨ ' : ''}${monName(mon)}<small>Lv.${mon.level || 100}</small></span><b>×</b></button>` : ''; }).join('') : `<span class="muted">${text('No Pokémon selected yet.', '尚未选择宝可梦。')}</span>`}</div>`;
     const search = byId('battle-picker-search');
     if (search) search.oninput = () => { battleQuery = search.value; renderBattlePicker(); };
-    controls.querySelectorAll('.battle-view-btn').forEach(button => button.onclick = () => {
-      battleView = button.dataset.view;
-      localStorage.setItem('battle-picker-view', battleView);
-      renderBattlePicker();
-    });
-    const add = byId('battle-picker-add');
-    if (add) add.onclick = async () => {
-      const selected = byId('battle-picker-select')?.value;
-      if (!selected) return;
-      await window.tokenCompanion.setTeam([...team, selected]);
-      await quickRefresh();
-      renderBattlePicker();
-    };
+    const typeSelect = byId('battle-picker-type'), shinySelect = byId('battle-picker-shiny'), levelSelect = byId('battle-picker-level');
+    typeSelect.value = battleType; shinySelect.value = battleShiny; levelSelect.value = battleLevel;
+    typeSelect.onchange = () => { battleType = typeSelect.value; renderBattlePicker(); };
+    shinySelect.onchange = () => { battleShiny = shinySelect.value; renderBattlePicker(); };
+    levelSelect.onchange = () => { battleLevel = levelSelect.value; renderBattlePicker(); };
     controls.querySelectorAll('.battle-card-add').forEach(button => button.onclick = async () => {
       await window.tokenCompanion.setTeam([...team, button.dataset.id]);
       await quickRefresh();

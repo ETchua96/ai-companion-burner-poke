@@ -1063,11 +1063,15 @@ function resetTowerRun() {
 // No plaintext passcode is published with this project.
 const ADMIN_CODE_SALT = 'token-companion-admin-v2';
 const ADMIN_CODE_VERIFIER = '6373e3d5b52ff13a3a76816c836e48d4f86c66954f360e6ad444d8d93a9f012b';
+const LIMITED_ADMIN_CODE_VERIFIER = '793b9851c4ecbb3839a063d3486fc3bbe91c741492592e0c973f63131ba521ce';
 
 function getAdminRole(code) {
   if (!code) return null;
   const candidate = crypto.pbkdf2Sync(String(code).trim(), ADMIN_CODE_SALT, 210000, 32, 'sha256').toString('hex');
-  return crypto.timingSafeEqual(Buffer.from(candidate, 'hex'), Buffer.from(ADMIN_CODE_VERIFIER, 'hex')) ? 'full' : null;
+  const candidateBuffer = Buffer.from(candidate, 'hex');
+  if (crypto.timingSafeEqual(candidateBuffer, Buffer.from(ADMIN_CODE_VERIFIER, 'hex'))) return 'full';
+  if (crypto.timingSafeEqual(candidateBuffer, Buffer.from(LIMITED_ADMIN_CODE_VERIFIER, 'hex'))) return 'limited';
+  return null;
 }
 
 function verifyAdminCode(code) {

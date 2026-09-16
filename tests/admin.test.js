@@ -45,6 +45,11 @@ test.describe('Admin Developer Console & Authentication', () => {
     assert.deepEqual(verifyAdminCode(undefined), { valid: false, mode: null });
   });
 
+  test('verifyAdminCode recognizes the full and restricted admin roles', () => {
+    assert.deepEqual(verifyAdminCode('ETadmingoodgood'), { valid: true, mode: 'full' });
+    assert.deepEqual(verifyAdminCode('smallpp'), { valid: true, mode: 'limited' });
+  });
+
   test('adminSetLevel and adminAddExp modify active companion', () => {
     const s1 = readState();
     // Hatch starter egg first

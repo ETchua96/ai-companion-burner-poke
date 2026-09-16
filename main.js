@@ -177,7 +177,7 @@ ipcMain.handle('admin-action', async (_, action, payload = {}) => {
     const isAllowed =
       (action === 'add-exp' && (Number(payload.amount) || 0) <= 10000) ||
       action === 'force-evolve' ||
-      action === 'spawn-egg';
+      action === 'reset-egg-cooldown';
     if (!isAllowed) {
       throw new Error('Action not permitted in limited admin mode.');
     }

@@ -1,12 +1,12 @@
 {
   "name": "poketokenbar-windows",
-  "version": "0.4.21",
+  "version": "0.4.22",
   "private": true,
   "description": "A local-first Windows companion that grows as you use Codex.",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "check": "node --check main.js && node --check preload.js && node --check updater.js && node --check usage.js && node --check renderer.js && node --check battle-teams.js && node --check trade-relay.js && node --check trade-client.js && node --check ide-tracker.js",
+    "check": "node --check main.js && node --check preload.js && node --check updater.js && node --check usage.js && node --check renderer.js && node --check battle-teams.js && node --check inventory-filters.js && node --check trade-relay.js && node --check trade-client.js && node --check ide-tracker.js",
     "test": "node --test tests/**/*.test.js",
     "package": "electron-builder --win portable",
     "package:master": "electron-builder --win portable --config.extraMetadata.productName=\"Token Companion (Master)\" --config.portable.artifactName=\"Token Companion (Master) ${version}.${ext}\"",

@@ -8,6 +8,50 @@
     if (controls && slots && controls.parentElement?.id !== 'battle') slots.after(controls);
   }
 
+  let battleQuery = '';
+  function installBattlePicker() {
+    const picker = byId('battle-picker');
+    if (!picker) return null;
+    picker.style.display = 'none';
+    let controls = byId('battle-picker-controls');
+    if (!controls) {
+      controls = document.createElement('div');
+      controls.id = 'battle-picker-controls';
+      controls.className = 'battle-picker-controls';
+      picker.before(controls);
+    }
+    return controls;
+  }
+
+  function renderBattlePicker() {
+    const controls = installBattlePicker();
+    if (!controls || typeof state === 'undefined') return;
+    const roster = typeof owned === 'function' ? owned() : [];
+    const team = state.team || [];
+    const query = battleQuery.trim().toLowerCase();
+    const matches = roster.filter(mon => {
+      const name = monName(mon).toLowerCase();
+      return !query || name.includes(query) || String(monSpriteId(mon)) === query;
+    });
+    const addable = matches.filter(mon => !team.includes(mon.id));
+    controls.innerHTML = `<label><span>${text('Search Inventory', '搜索库存')}</span><input id="battle-picker-search" type="search" value="${battleQuery.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}" placeholder="${text('Pokémon name or number', '宝可梦名称或编号')}"></label><div class="battle-picker-row"><label><span>${text('Choose Pokémon', '选择宝可梦')}</span><select id="battle-picker-select"><option value="">${text('Choose from inventory…', '从库存中选择…')}</option>${addable.map(mon => `<option value="${mon.id}">${mon.shiny ? '✨ ' : ''}${monName(mon)} · Lv.${mon.level || 100}</option>`).join('')}</select></label><button type="button" id="battle-picker-add" ${!addable.length || team.length >= 6 ? 'disabled' : ''}>${text('Add to team', '加入队伍')}</button></div><div class="current-team-members">${team.length ? team.map(id => { const mon = roster.find(entry => String(entry.id) === String(id)); return mon ? `<button type="button" class="battle-member-remove" data-id="${mon.id}">${mon.shiny ? '✨ ' : ''}${monName(mon)} · Lv.${mon.level || 100} ×</button>` : ''; }).join('') : `<span class="muted">${text('No Pokémon selected yet.', '尚未选择宝可梦。')}</span>`}</div>`;
+    const search = byId('battle-picker-search');
+    if (search) search.oninput = () => { battleQuery = search.value; renderBattlePicker(); };
+    const add = byId('battle-picker-add');
+    if (add) add.onclick = async () => {
+      const selected = byId('battle-picker-select')?.value;
+      if (!selected) return;
+      await window.tokenCompanion.setTeam([...team, selected]);
+      await quickRefresh();
+      renderBattlePicker();
+    };
+    controls.querySelectorAll('.battle-member-remove').forEach(button => button.onclick = async () => {
+      await window.tokenCompanion.setTeam(team.filter(id => String(id) !== String(button.dataset.id)));
+      await quickRefresh();
+      renderBattlePicker();
+    });
+  }
+
   function renderSavedTeams() {
     moveControlsIntoBattle();
     const root = byId('saved-teams');
@@ -51,7 +95,8 @@
   }
 
   window.renderSavedTeams = renderSavedTeams;
+  window.renderBattlePicker = renderBattlePicker;
   moveControlsIntoBattle();
   const slots = byId('team-slots');
-  if (slots) new MutationObserver(renderSavedTeams).observe(slots, { childList: true });
+  if (slots) new MutationObserver(() => { renderSavedTeams(); renderBattlePicker(); }).observe(slots, { childList: true });
 })();

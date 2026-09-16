@@ -2,6 +2,33 @@
   const byId = id => document.getElementById(id);
   const text = (en, zh) => (typeof language !== 'undefined' && language === 'zh-CN' ? zh : en);
 
+  function installPanelToggle(panel, key, label) {
+    if (!panel) return;
+    const isPicker = key === 'battle-picker-collapsed';
+    const heading = isPicker ? panel.querySelector('h3') : panel.querySelector('.panel-heading');
+    if (!heading) return;
+    let button = panel.querySelector(`[data-collapse-key="${key}"]`);
+    if (!button) {
+      button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'section-collapse-toggle';
+      button.dataset.collapseKey = key;
+      if (isPicker) heading.after(button); else heading.append(button);
+      button.onclick = () => {
+        const next = !panel.classList.contains('is-collapsed');
+        localStorage.setItem(key, next ? 'true' : 'false');
+        apply();
+      };
+    }
+    function apply() {
+      const collapsed = localStorage.getItem(key) === 'true';
+      panel.classList.toggle('is-collapsed', collapsed);
+      button.textContent = collapsed ? text(`Show ${label}`, `显示${label}`) : text(`Hide ${label}`, `隐藏${label}`);
+      button.setAttribute('aria-expanded', String(!collapsed));
+    }
+    apply();
+  }
+
   function moveControlsIntoBattle() {
     const controls = byId('saved-team-controls');
     const slots = byId('team-slots');
@@ -16,6 +43,7 @@
     const picker = byId('battle-picker');
     if (!picker) return null;
     picker.style.display = 'none';
+    installPanelToggle(picker.closest('.panel'), 'battle-picker-collapsed', 'inventory picker');
     let controls = byId('battle-picker-controls');
     if (!controls) {
       controls = document.createElement('div');
@@ -66,6 +94,7 @@
     moveControlsIntoBattle();
     const root = byId('saved-teams');
     if (!root || typeof state === 'undefined') return;
+    installPanelToggle(byId('saved-team-controls'), 'saved-teams-collapsed', 'saved teams');
     const roster = typeof owned === 'function' ? owned() : [];
     const saved = Array.from({ length: 6 }, (_, slot) => state.savedTeams?.[slot] || []);
     const savedCount = saved.filter(team => team.length > 0).length;

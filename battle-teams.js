@@ -9,6 +9,7 @@
   }
 
   let battleQuery = '';
+  let battleView = localStorage.getItem('battle-picker-view') || 'cards';
   function installBattlePicker() {
     const picker = byId('battle-picker');
     if (!picker) return null;
@@ -31,12 +32,19 @@
     const query = battleQuery.trim().toLowerCase();
     const matches = roster.filter(mon => {
       const name = monName(mon).toLowerCase();
-      return !query || name.includes(query) || String(monSpriteId(mon)) === query;
+      const types = (lineFor(mon.line).types?.[monStage(mon)] || []).join(' ').toLowerCase();
+      return !query || name.includes(query) || String(monSpriteId(mon)) === query || types.includes(query);
     });
     const addable = matches.filter(mon => !team.includes(mon.id));
-    controls.innerHTML = `<label><span>${text('Search Inventory', '搜索库存')}</span><input id="battle-picker-search" type="search" value="${battleQuery.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}" placeholder="${text('Pokémon name or number', '宝可梦名称或编号')}"></label><div class="battle-picker-row"><label><span>${text('Choose Pokémon', '选择宝可梦')}</span><select id="battle-picker-select"><option value="">${text('Choose from inventory…', '从库存中选择…')}</option>${addable.map(mon => `<option value="${mon.id}">${mon.shiny ? '✨ ' : ''}${monName(mon)} · Lv.${mon.level || 100}</option>`).join('')}</select></label><button type="button" id="battle-picker-add" ${!addable.length || team.length >= 6 ? 'disabled' : ''}>${text('Add to team', '加入队伍')}</button></div><div class="current-team-members">${team.length ? team.map(id => { const mon = roster.find(entry => String(entry.id) === String(id)); return mon ? `<button type="button" class="battle-member-remove" data-id="${mon.id}">${mon.shiny ? '✨ ' : ''}${monName(mon)} · Lv.${mon.level || 100} ×</button>` : ''; }).join('') : `<span class="muted">${text('No Pokémon selected yet.', '尚未选择宝可梦。')}</span>`}</div>`;
+    const cards = addable.map(mon => `<article class="battle-picker-card"><img src="${sprite(monSpriteId(mon), mon.shiny)}"><strong>${mon.shiny ? '✨ ' : ''}${monName(mon)}</strong><span>Lv.${mon.level || 100}</span><button type="button" class="battle-card-add" data-id="${mon.id}" ${team.length >= 6 ? 'disabled' : ''}>${text('Add', '加入')}</button></article>`).join('') || `<p class="muted">${text('No matching Pokémon available.', '没有可加入的匹配宝可梦。')}</p>`;
+    controls.innerHTML = `<label><span>${text('Search Inventory', '搜索库存')}</span><input id="battle-picker-search" type="search" value="${battleQuery.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}" placeholder="${text('Name, number, or type', '名称、编号或属性')}"></label><div class="battle-view-switch"><span>${text('View', '视图')}</span><button type="button" class="battle-view-btn ${battleView === 'cards' ? 'active' : ''}" data-view="cards">${text('Sprite cards', '精灵卡片')}</button><button type="button" class="battle-view-btn ${battleView === 'dropdown' ? 'active' : ''}" data-view="dropdown">${text('Compact dropdown', '紧凑下拉')}</button></div><div class="battle-picker-row ${battleView === 'dropdown' ? '' : 'hidden'}"><label><span>${text('Choose Pokémon', '选择宝可梦')}</span><select id="battle-picker-select"><option value="">${text('Choose from inventory…', '从库存中选择…')}</option>${addable.map(mon => `<option value="${mon.id}">${mon.shiny ? '✨ ' : ''}${monName(mon)} · Lv.${mon.level || 100}</option>`).join('')}</select></label><button type="button" id="battle-picker-add" ${!addable.length || team.length >= 6 ? 'disabled' : ''}>${text('Add to team', '加入队伍')}</button></div><div class="battle-picker-card-grid ${battleView === 'cards' ? '' : 'hidden'}">${cards}</div><div class="current-team-members">${team.length ? team.map(id => { const mon = roster.find(entry => String(entry.id) === String(id)); return mon ? `<button type="button" class="battle-member-remove" data-id="${mon.id}"><img src="${sprite(monSpriteId(mon), mon.shiny)}"><span>${mon.shiny ? '✨ ' : ''}${monName(mon)}<small>Lv.${mon.level || 100}</small></span><b>×</b></button>` : ''; }).join('') : `<span class="muted">${text('No Pokémon selected yet.', '尚未选择宝可梦。')}</span>`}</div>`;
     const search = byId('battle-picker-search');
     if (search) search.oninput = () => { battleQuery = search.value; renderBattlePicker(); };
+    controls.querySelectorAll('.battle-view-btn').forEach(button => button.onclick = () => {
+      battleView = button.dataset.view;
+      localStorage.setItem('battle-picker-view', battleView);
+      renderBattlePicker();
+    });
     const add = byId('battle-picker-add');
     if (add) add.onclick = async () => {
       const selected = byId('battle-picker-select')?.value;
@@ -45,6 +53,11 @@
       await quickRefresh();
       renderBattlePicker();
     };
+    controls.querySelectorAll('.battle-card-add').forEach(button => button.onclick = async () => {
+      await window.tokenCompanion.setTeam([...team, button.dataset.id]);
+      await quickRefresh();
+      renderBattlePicker();
+    });
     controls.querySelectorAll('.battle-member-remove').forEach(button => button.onclick = async () => {
       await window.tokenCompanion.setTeam(team.filter(id => String(id) !== String(button.dataset.id)));
       await quickRefresh();
@@ -64,8 +77,8 @@
     root.innerHTML = saved.map((ids, slot) => {
       const members = ids.map(id => roster.find(mon => String(mon.id) === String(id))).filter(Boolean);
       const empty = members.length === 0;
-      const names = empty ? text('No saved lineup', '暂无已保存队伍') : members.map(mon => `${monName(mon)} Lv.${mon.level || 100}`).join(' · ');
-      return `<article class="saved-team-card ${empty ? 'empty' : ''}"><strong>${text(`Team ${slot + 1}`, `队伍 ${slot + 1}`)}</strong><div class="saved-team-preview">${names}</div><div class="saved-team-actions"><button type="button" class="save-team-slot" data-slot="${slot}" ${state.team?.length ? '' : 'disabled'}>${empty ? text('Save current', '保存当前队伍') : text('Overwrite', '覆盖保存')}</button><button type="button" class="load-team-slot" data-slot="${slot}" ${empty ? 'disabled' : ''}>${text('Load', '载入')}</button><button type="button" class="clear-team-slot danger" data-slot="${slot}" ${empty ? 'disabled' : ''}>${text('Clear', '清空')}</button></div></article>`;
+      const preview = empty ? `<span class="muted">${text('No saved lineup', '暂无已保存队伍')}</span>` : members.map(mon => `<img title="${monName(mon)} Lv.${mon.level || 100}" src="${sprite(monSpriteId(mon), mon.shiny)}">`).join('');
+      return `<article class="saved-team-card ${empty ? 'empty' : ''}"><strong>${text(`Team ${slot + 1}`, `队伍 ${slot + 1}`)}</strong><div class="saved-team-preview">${preview}</div><div class="saved-team-actions"><button type="button" class="save-team-slot" data-slot="${slot}" ${state.team?.length ? '' : 'disabled'}>${empty ? text('Save current', '保存当前队伍') : text('Overwrite', '覆盖保存')}</button><button type="button" class="load-team-slot" data-slot="${slot}" ${empty ? 'disabled' : ''}>${text('Load', '载入')}</button><button type="button" class="clear-team-slot danger" data-slot="${slot}" ${empty ? 'disabled' : ''}>${text('Clear', '清空')}</button></div></article>`;
     }).join('');
 
     root.querySelectorAll('.save-team-slot').forEach(button => button.onclick = async () => {

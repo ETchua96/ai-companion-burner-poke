@@ -52,5 +52,5 @@
 .admin-spawner-row input,.admin-spawner-row select{padding:7px 10px;border:2px solid var(--line);border-radius:6px}
 .danger-card{border-color:#d9534f;background:#fff5f5}
 .danger-card h4{color:#c9302c}
-
+.battle-team-actions{margin:16px 0 0}.saved-teams-panel{margin:0 0 18px}.saved-teams-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.saved-team-card{min-height:136px;padding:12px;border:2px solid var(--line);border-radius:10px;background:#fff8ed;display:flex;flex-direction:column;gap:9px}.saved-team-card.empty{border-style:dashed;background:#e7ddd1}.saved-team-card strong{font-size:14px}.saved-team-preview{min-height:32px;font:11px 'Courier New',monospace;color:#765e53;overflow-wrap:anywhere}.saved-team-actions{margin-top:auto;display:flex;gap:7px;flex-wrap:wrap}.saved-team-actions button{flex:1 1 70px;padding:7px;font-size:12px;box-shadow:2px 2px 0 var(--shadow)}@media(max-width:760px){.saved-teams-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 

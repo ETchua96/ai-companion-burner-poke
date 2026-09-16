@@ -351,6 +351,7 @@ function initial() {
     caught: [],
     pokedex: [],
     team: [],
+    savedTeams: Array.from({ length: 6 }, () => []),
     trades: [],
     tower: { currentFloor: 1, bestFloor: 0, teamHp: {}, activeRun: false }
   };
@@ -420,8 +421,10 @@ function readState() {
       sanitizeMonOrStateLine(state);
     }
 
-    if (Array.isArray(state.team) && Array.isArray(state.caught)) {
-      state.team = [...new Set(state.team.filter(id => state.caught.some(mon => mon.id === id)))].slice(0, 6);
+    if (Array.isArray(state.caught)) {
+      const sanitizeTeam = ids => [...new Set((Array.isArray(ids) ? ids : []).filter(id => state.caught.some(mon => mon.id === id)))].slice(0, 6);
+      state.team = sanitizeTeam(state.team);
+      state.savedTeams = Array.from({ length: 6 }, (_, index) => sanitizeTeam(state.savedTeams?.[index]));
     }
     if (state.levelXp === undefined) {
       state.levelXp = (state.xp || 0) % XP_PER_LEVEL;
@@ -758,6 +761,37 @@ function setTeam(ids) {
   state.team = [...new Set(valid)].slice(0, 6);
   return save(state);
 }
+function clearTeam() {
+  const state = readState();
+  state.team = [];
+  return save(state);
+}
+function teamSlot(slot) {
+  const index = Number(slot);
+  if (!Number.isInteger(index) || index < 0 || index >= 6) throw new Error('Choose a battle-team slot from 1 to 6.');
+  return index;
+}
+function saveBattleTeam(slot) {
+  const state = readState();
+  const index = teamSlot(slot);
+  if (!state.team.length) throw new Error('Add at least one Pokémon to the current team before saving it.');
+  state.savedTeams[index] = [...state.team];
+  return save(state);
+}
+function loadBattleTeam(slot) {
+  const state = readState();
+  const index = teamSlot(slot);
+  const selected = state.savedTeams[index] || [];
+  if (!selected.length) throw new Error('This saved team slot is empty.');
+  state.team = [...selected];
+  return save(state);
+}
+function clearSavedBattleTeam(slot) {
+  const state = readState();
+  const index = teamSlot(slot);
+  state.savedTeams[index] = [];
+  return save(state);
+}
 function finalLabel(line) {
   const l = lineFor(line);
   return l.labels[l.finalStage ?? (l.labels.length - 1)];
@@ -772,6 +806,7 @@ function releaseCaught(id, force = false) {
   }
   state.caught = state.caught.filter(entry => String(entry.id) !== String(id));
   state.team = state.team.filter(teamId => String(teamId) !== String(id));
+  state.savedTeams = (state.savedTeams || []).map(team => team.filter(teamId => String(teamId) !== String(id)));
   return save(state);
 }
 function activeMon(state) {
@@ -847,6 +882,7 @@ function completeTrade(state, record, received) {
   state.caught.push(gained);
   registerPokedex(state, gained, gained.stage);
   state.team = state.team.filter(id => id !== record.sentId);
+  state.savedTeams = (state.savedTeams || []).map(team => team.filter(id => id !== record.sentId));
   record.applied = true;
   record.status = 'complete';
   return state;
@@ -1216,6 +1252,10 @@ module.exports = {
   swapEggToActive,
   replayCaught,
   setTeam,
+  clearTeam,
+  saveBattleTeam,
+  loadBattleTeam,
+  clearSavedBattleTeam,
   releaseCaught,
   createRemoteTrade,
   joinRemoteTrade,

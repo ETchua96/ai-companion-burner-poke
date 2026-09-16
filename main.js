@@ -1,7 +1,7 @@
 const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, Notification, dialog } = require('electron');
 const path = require('path');
 const { readUsage } = require('./usage');
-const { readState, applyUsage, hatchEgg, releaseEgg, claimFreeEgg, getEggClaimStatus, swapActive, swapEggToActive, replayCaught, setTeam, releaseCaught, createRemoteTrade, joinRemoteTrade, confirmRemoteTrade, remoteTradeStatus, createRemoteBattle, joinRemoteBattle, remoteBattleStatus, createTrade, claimTrade, resetCompanion, LINES, getTowerStatus, startTowerRun, battleTowerFloor, resetTowerRun, recordIdeActiveTime, verifyAdminCode, adminSetLevel, adminAddExp, adminForceEvolve, adminToggleShiny, adminSpawnEgg, adminResetEggCooldown, adminSpawnPokemon, adminHealTowerTeam, adminSetTowerFloor, adminResetState } = require('./companion');
+const { readState, applyUsage, hatchEgg, releaseEgg, claimFreeEgg, getEggClaimStatus, swapActive, swapEggToActive, replayCaught, setTeam, clearTeam, saveBattleTeam, loadBattleTeam, clearSavedBattleTeam, releaseCaught, createRemoteTrade, joinRemoteTrade, confirmRemoteTrade, remoteTradeStatus, createRemoteBattle, joinRemoteBattle, remoteBattleStatus, createTrade, claimTrade, resetCompanion, LINES, getTowerStatus, startTowerRun, battleTowerFloor, resetTowerRun, recordIdeActiveTime, verifyAdminCode, adminSetLevel, adminAddExp, adminForceEvolve, adminToggleShiny, adminSpawnEgg, adminResetEggCooldown, adminSpawnPokemon, adminHealTowerTeam, adminSetTowerFloor, adminResetState } = require('./companion');
 const { autoBattle, PRACTICE_TIERS } = require('./battle');
 const { getCatalog } = require('./catalog');
 const { startRelay } = require('./trade-relay');
@@ -124,6 +124,10 @@ ipcMain.handle('confirm', async (_, opts) => {
   return res.response === 0;
 });
 ipcMain.handle('set-team', (_, ids) => setTeam(ids));
+ipcMain.handle('clear-team', () => clearTeam());
+ipcMain.handle('save-battle-team', (_, slot) => saveBattleTeam(slot));
+ipcMain.handle('load-battle-team', (_, slot) => loadBattleTeam(slot));
+ipcMain.handle('clear-saved-battle-team', (_, slot) => clearSavedBattleTeam(slot));
 ipcMain.handle('release-caught', (_, id, force) => releaseCaught(id, force));
 ipcMain.handle('claim-free-egg', () => claimFreeEgg());
 ipcMain.handle('egg-claim-status', () => getEggClaimStatus());

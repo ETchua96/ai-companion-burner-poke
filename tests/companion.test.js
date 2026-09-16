@@ -140,6 +140,38 @@ describe('Companion System', () => {
     });
   });
 
+  describe('Saved Battle Teams', () => {
+    test('saves and loads up to six battle-team slots', () => {
+      const state = companion.readState();
+      state.caught = Array.from({ length: 7 }, (_, i) => ({
+        id: `saved-${i}`, line: 1, stage: 2, level: 100, shiny: false
+      }));
+      state.team = state.caught.slice(0, 6).map(mon => mon.id);
+      fs.writeFileSync(path.join(testDir, 'companion.json'), JSON.stringify(state, null, 2));
+
+      companion.saveBattleTeam(0);
+      companion.setTeam(['saved-6']);
+      companion.loadBattleTeam(0);
+      const updated = companion.readState();
+      assert.equal(updated.savedTeams.length, 6);
+      assert.deepEqual(updated.team, state.caught.slice(0, 6).map(mon => mon.id));
+    });
+
+    test('clears the current and an individual saved team', () => {
+      const state = companion.readState();
+      state.caught = [{ id: 'saved-1', line: 1, stage: 2, level: 100, shiny: false }];
+      state.team = ['saved-1'];
+      fs.writeFileSync(path.join(testDir, 'companion.json'), JSON.stringify(state, null, 2));
+
+      companion.saveBattleTeam(2);
+      companion.clearTeam();
+      companion.clearSavedBattleTeam(2);
+      const updated = companion.readState();
+      assert.deepEqual(updated.team, []);
+      assert.deepEqual(updated.savedTeams[2], []);
+    });
+  });
+
   describe('Duplicate Release Protection', () => {
     test('allows releasing a duplicate Pokémon and removes it from team', () => {
       const state = companion.readState();
@@ -808,4 +840,3 @@ describe('Companion System', () => {
     });
   });
 });
-
